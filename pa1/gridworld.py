@@ -8,9 +8,8 @@
 
     15 Sep 2022 - Initial Creation - Sherwyn Braganza
     16 Sep 2022 - Added Stochastic Solver - Sherwyn Braganza
-    17 Sep 2022 - Finalized Stochastic Solver - Sherwyn Braganza
+    17 Sep 2022 - Added Deterministic Solver - Sherwyn Braganza
     18 Sep 2022 - Finalized Stochastic Solver - Sherwyn Braganza
-    18 Sep 2022 - Final
 
     Assignment Document/Details @ https://d2l.sdbor.edu/d2l/le/content/1740264/viewContent/10706050/View
 
