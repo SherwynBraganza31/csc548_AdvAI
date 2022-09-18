@@ -41,9 +41,9 @@ from matplotlib.table import Table
 
 matplotlib.use('Agg')
 
-WORLD_SIZE = 5 # Grid row/col size
+WORLD_SIZE = 4 # Grid row/col size
 EIGHT_POS = [2, 0] # Position of the 8 cell
-FIFTEEN_POS = [4, 4] # Position of the 15 cell
+FIFTEEN_POS = [3, 3] # Position of the 15 cell
 DISCOUNT = 0.95
 ACTION_PROB = 0.25
 
