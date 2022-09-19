@@ -10,8 +10,9 @@
     16 Sep 2022 - Added Stochastic Solver - Sherwyn Braganza
     17 Sep 2022 - Added Deterministic Solver - Sherwyn Braganza
     18 Sep 2022 - Finalized Stochastic Solver - Sherwyn Braganza
+    18 Sep 2022 - Finalized Deterministic Solver - Sherwyn Braganza
 
-    Assignment Document/Details @ https://d2l.sdbor.edu/d2l/le/content/1740264/viewContent/10706050/View
+    Assignment Document/Details @ https://github.com/SherwynBraganza31/csc548_AdvAI/blob/main/pa1/pa1.pdf
 
 
     0   1   2   3
@@ -219,7 +220,7 @@ def stochastic_solver():
 
         value = new_value
 
-    print('The max number of policies are {}'.format(max_policies_calc(value)))
+    print('The max number of optimal policies are {}'.format(max_policies_calc(value)))
 
 
 def deterministic_solver():
