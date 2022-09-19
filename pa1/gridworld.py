@@ -214,10 +214,12 @@ def stochastic_solver():
 
         # if no other stochastic policies can be found, break
         if np.sum(np.abs(new_value - value)) == 0 and np.array_equal(new_value, value):
-            print('No other optimal stochastic policies were found, except for k = {}'.format(k-1))
+            print('No other optimal stochastic policies were found, stopped at the {}\'th iteration'.format(k))
             break
 
         value = new_value
+
+    print('The max number of policies are {}'.format(max_policies_calc(value)))
 
 
 def deterministic_solver():
@@ -242,6 +244,7 @@ def deterministic_solver():
 
     A_inv = np.linalg.inv(A)
     x = np.matmul(A_inv,b)
+    #x = x - x[-1]
     #x = np.linalg.solve(A, b)
     draw_image(np.round(x.reshape(WORLD_SIZE, WORLD_SIZE), decimals=2))
     plt.savefig('pa1_valueFunc_deterministic.png')
@@ -249,6 +252,20 @@ def deterministic_solver():
     draw_policy(x.reshape(WORLD_SIZE, WORLD_SIZE))
     plt.savefig('pa1_optimal_policy_deterministic.png')
     plt.close()
+
+
+def max_policies_calc(optimal_values):
+    max_policies = 1
+
+    for (i, j), val in np.ndenumerate(optimal_values):
+        next_vals = []
+        for action in ACTIONS:
+            next_state, _ = step([i, j], action)
+            next_vals.append(optimal_values[next_state[0], next_state[1]])
+
+        max_policies *= np.count_nonzero(next_vals == np.max(next_vals))
+
+    return max_policies
 
 
 if __name__ == '__main__':
