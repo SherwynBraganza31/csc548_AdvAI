@@ -11,6 +11,7 @@
     17 Sep 2022 - Added Deterministic Solver - Sherwyn Braganza
     18 Sep 2022 - Finalized Stochastic Solver - Sherwyn Braganza
     18 Sep 2022 - Finalized Deterministic Solver - Sherwyn Braganza
+    19 Sep 2022 - Added more comments - Sherwyn Braganza
 
     Assignment Document/Details @ https://github.com/SherwynBraganza31/csc548_AdvAI/blob/main/pa1/pa1.pdf
 
@@ -256,6 +257,15 @@ def deterministic_solver():
 
 
 def max_policies_calc(optimal_values):
+    '''
+        Calculates the max number of policies by looking for cells with equiprobable q values.
+        For example if 2 cells have 2 different policies each, the total number of overall
+        policies is 2*2 = 4
+
+        @params     optimal values:np.matrix : 2D matrix containing q values for each cell
+
+        @returns    max_policies:int         : The max number of policies
+    '''
     max_policies = 1
 
     for (i, j), val in np.ndenumerate(optimal_values):
