@@ -32,6 +32,10 @@
     • In all remaining cases, choosing an action will move you to an adjacent state within the grid with
     probability 1 and an immediate reward of -1. For example, choosing the DOWN action in state 5 will
     take you to state 9 with probability 1 and immediate reward -1
+
+    Running instructions: python3 gridworld.py
+
+    * The plots generated are stored with their resp filenames.
 '''
 
 
@@ -209,19 +213,21 @@ def stochastic_solver():
         if np.sum(np.abs(new_value - value)) < 1e-8:
             draw_image(np.round(new_value, decimals=2))
             plt.savefig('pa1_valueFunc_stochastic.png')
+            # plt.show()
             plt.close()
             draw_policy(new_value)
             plt.savefig('pa1_optimal_policy_stochastic.png')
+            # plt.show()
             plt.close()
 
         # if no other stochastic policies can be found, break
         if np.sum(np.abs(new_value - value)) == 0 and np.array_equal(new_value, value):
-            print('No other optimal stochastic policies were found, stopped at the {}\'th iteration'.format(k))
+            print('No other optimal stochastic policies were found, stopped at the {}\'th iteration\n'.format(k))
             break
 
         value = new_value
 
-    print('The max number of optimal policies are {}'.format(max_policies_calc(value)))
+    print('The max number of optimal policies (deterministic and stochastic) are {}.\n'.format(max_policies_calc(value)))
 
 
 def deterministic_solver():
@@ -250,9 +256,11 @@ def deterministic_solver():
     #x = np.linalg.solve(A, b)
     draw_image(np.round(x.reshape(WORLD_SIZE, WORLD_SIZE), decimals=2))
     plt.savefig('pa1_valueFunc_deterministic.png')
+    # plt.show()
     plt.close()
     draw_policy(x.reshape(WORLD_SIZE, WORLD_SIZE))
     plt.savefig('pa1_optimal_policy_deterministic.png')
+    # plt.show()
     plt.close()
 
 
@@ -282,3 +290,6 @@ def max_policies_calc(optimal_values):
 if __name__ == '__main__':
     stochastic_solver()
     deterministic_solver()
+    print('Please check the generated images saved as .png files for the policies. ' +
+           'Apologies, but I thought it would be better to save them as pictures since ' +
+            'the command line output would get skewed if window size was too small.')
