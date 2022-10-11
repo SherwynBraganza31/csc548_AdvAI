@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import json
+import os.path
+
 import numpy as np
 import struct
 import zmq
@@ -9,44 +11,88 @@ APPLY_FORCE = 0
 SET_STATE = 1
 NEW_STATE = 2
 ANIMATE = 3
+LEARNING_RATE = 0.01
 
-def myround(x, base=0.1):
+
+def roundToBins(x, bin=0.1):
     if x == 0:
         return 0
-    return base * round(x/base)
+    return bin * round(x / bin)
+
+
+def checkIfReset(x, xdot, theta, thetadot, reward) -> bool:
+    # if out of bounds, reset
+    if x < -5 or x > 5:
+        return True
+
+    # if below horizon, reset
+    # if theta < -math.pi / 2 or x > math.pi / 2:
+    #     return True
+
+    # if reward == -1:
+    #     return True
+
+
+def roundState(state: tuple) -> tuple:
+    x, xdot, theta, thetadot, reward = state
+    return (roundToBins(x, 0.1),
+            roundToBins(xdot, 1),
+            roundToBins(theta, 0.1),
+            roundToBins(thetadot, 0.1),
+            reward)
+
 
 def main():
-    # x = [-5:0.1:5]
-    # xdot = [-10:0.5:10]
-    # theta = [-pi/2:pi/18:pi/2]
-    # thetadot = [-pi*10:1:pi*10]
-    # force = [-10:1:10]
-    td_tensor = -1 * np.ones((101, 21, 37, 63, 21))
-    last_action_idx = 0
-    current_state = (50,10,18,18,10)
+    current_state = (0, 0, 0.2, 0)
+    current_action = 0
+    # if os.path.exists('model.json'):
+    #     with open('model.json', 'r') as infile:
+    #         state_action_table = json.load(infile)
+    # else:
+    #     state_action_table = {}
+    state_action_table = {}
+
     reset_flag = False
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect("tcp://localhost:5555")
 
-    animation_enabled = True
     count = 0
+    animation_enabled = False
     while True:
-        if count % 1000 == 0:
+        if count == 0:
             # toggle animation
             command = ANIMATE
-            animation_enabled = not animation_enabled
-            request_bytes = struct.pack('ii', command, animation_enabled)
+            request_bytes = struct.pack('ii', command, False)
             socket.send(request_bytes)
+
+        elif count%1000 == 0 and animation_enabled:
+            # toggle animation
+            command = ANIMATE
+            animation_enabled = False
+            request_bytes = struct.pack('ii', command, False)
+            socket.send(request_bytes)
+
+        elif count%10000 == 0 and not animation_enabled:
+            # toggle animation
+            command = ANIMATE
+            animation_enabled = True
+            request_bytes = struct.pack('ii', command, True)
+            socket.send(request_bytes)
+
+        # if count % 10000 == 0:
+        #     with open('model.json', 'w') as outfile:
+        #         json.dump(state_action_table, outfile)
 
         elif reset_flag:
             # reset the state
             command = SET_STATE
-            x = np.random.randint(-1,1)
+            x = 0
             xdot = 0.0
-            theta = np.random.random(1) * (math.pi/20)
+            theta = 0.2
             thetadot = 0.0
+            current_state = (x, xdot, theta, thetadot)
             request_bytes = struct.pack(
                 'iffff', command, x, xdot, theta, thetadot)
             socket.send(request_bytes)
@@ -54,14 +100,17 @@ def main():
 
         else:
             command = APPLY_FORCE
-            x, xdot, theta, thetadot,force = current_state
-            last_action_idx = np.argmax(td_tensor[x,xdot,theta,thetadot,:])
-            if not last_action_idx:
-                action = -theta/math.pi * 1
+            if current_state in state_action_table:
+                state_action = state_action_table[current_state]
+                best_action = max(state_action, key=state_action.get)
+                if state_action[best_action] < -0.01:
+                    best_action = np.round((np.random.random() * 5) - 2.5, 3)
             else:
-                action = np.random.random(1) - 0.5
-            current_state = (x, xdot, theta, thetadot, last_action_idx)
-            request_bytes = struct.pack('if', command, action)
+                best_action = np.round((np.random.random() * 5) - 2.5, 3)
+                Q_current = {best_action:0}
+                state_action_table.update({current_state:Q_current})
+            request_bytes = struct.pack('if', command, best_action)
+            current_action = best_action
             socket.send(request_bytes)
 
         count += 1
@@ -72,23 +121,22 @@ def main():
         if response_command == NEW_STATE:
             x, xdot, theta, thetadot, reward = struct.unpack(
                 'fffff', response_bytes[4:])
-            if x < -5 or x > 5:
-                reset_flag = True
-                continue
-            if theta < -math.pi/2 or x > math.pi/2:
-                reset_flag = True
-                continue
-            x = int(np.round(myround(x, 0.1)*10 + 50))
-            xdot = int(np.round(myround(xdot, 0.5) + 10))
-            theta = int(np.round(myround(theta, math.pi/180) + math.pi,0))
-            thetadot = int(np.round(myround(thetadot, math.pi / 18) + math.pi, 0))
-            new_state = (x, xdot, theta, thetadot, 10)
-            td_tensor[current_state] += reward + td_tensor[new_state]
-            current_state = new_state
-            print(new_state, reward)
-            if reward == -1:
-                reset_flag = True
 
+            new_state = (x, xdot, theta, thetadot, reward)
+            rounded_state = roundState(new_state)
+
+            Q_current = state_action_table[current_state]
+            current_action_Q_value = Q_current[current_action] if current_action in Q_current else 0
+            best_action = max(Q_current, key=Q_current.get)
+            Q_current[current_action] = current_action_Q_value \
+                                        + LEARNING_RATE * \
+                                        (reward + 0.95*Q_current[best_action] - current_action_Q_value)
+
+            state_action_table.update(Q_current)
+            current_state = rounded_state
+
+            reset_flag = checkIfReset(x, xdot, theta, thetadot, reward)
+            #print(current_state, best_action)
 
         elif response_command == ANIMATE:
             animation_enabled, = struct.unpack('i', response_bytes[4:])

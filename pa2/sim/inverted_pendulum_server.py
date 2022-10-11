@@ -14,7 +14,7 @@ import zmq
 def main(args):
     u = 0
     m1 = 0.1
-    m2 = 0.1
+    m2 = 1
     L = 1
     I2 = 1/12*m2*L**2
     l = L/2
